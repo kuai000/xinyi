@@ -267,8 +267,11 @@ function renderDashboard() {
         <div id="today-schedule-wrap"></div>
     `;
 
-    // 用排产模块取今日制作日的订单
-    const sv = Scheduler.getScheduleOverview(1);
+    // 用排产模块取今日制作日的订单（优先读持久化排产）
+    const savedMap = Store.getScheduleMap();
+    const todayStr = Store.formatDate(new Date());
+    const anySaved = Object.keys(savedMap).some(k => k >= todayStr);
+    const sv = Scheduler.getScheduleOverview(1, anySaved);
     const todayDg = sv.dates[0];
 
     if (!todayDg || !todayDg.items.length) {
@@ -979,62 +982,70 @@ function markPaid(id) {
 
 // ============ 6. 排产页 ============
 function renderSchedule() {
-    const sv = Scheduler.getScheduleOverview(3);
+    // 显示 7 天，已点击过一键排产就用持久化数据；否则回退到按制作日=交付日前一天展示
+    const savedMap = Store.getScheduleMap();
+    const todayStr = Store.formatDate(new Date());
+    const anySaved = Object.keys(savedMap).some(k => k >= todayStr);
+    const sv = Scheduler.getScheduleOverview(7, anySaved);
+
+    // 按钮区：从未排过→显示「一键排产」；有数据时→「更新排产」（重算）
+    let headerButtons;
+    if (anySaved) {
+        headerButtons = `
+            <button onclick="doAutoSchedule(true)" class="px-4 py-2.5 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl text-sm font-medium flex items-center gap-1.5 shadow-sm active:scale-95 transition">
+                🔄 更新排产
+            </button>`;
+    } else {
+        headerButtons = `
+            <button onclick="doAutoSchedule(false)" class="px-4 py-2.5 bg-gradient-to-r from-rose-500 to-pink-500 text-white rounded-xl text-sm font-medium flex items-center gap-1.5 shadow-md active:scale-95 transition">
+                ✨ 一键排产（7天）
+            </button>`;
+    }
 
     $('#main-content').innerHTML = `
-        <!-- 排产规则说明 -->
-        <div class="bg-white rounded-2xl p-4 shadow-sm">
-            <div class="flex items-center gap-2 mb-3">
-                <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">📖</div>
+        <!-- 顶栏：标题 + 操作按钮 -->
+        <div class="flex items-center justify-between gap-2 mb-3">
+            <div class="flex items-center gap-2">
+                <div class="w-9 h-9 bg-slate-100 rounded-xl flex items-center justify-center text-lg">🗓️</div>
                 <div>
-                    <div class="font-bold text-sm text-gray-800">排产规则说明</div>
-                    <div class="text-xs text-gray-400">按照以下 4 条规则自动生成排产计划</div>
+                    <div class="font-bold text-gray-800">未来7天排产日程</div>
+                    <div class="text-xs text-gray-400 mt-0.5">${anySaved ? `已保存 · 可点击「更新排产」重算` : `尚未排产 · 点击一键排产自动生成计划`}</div>
                 </div>
             </div>
-            <div class="grid grid-cols-2 gap-2 text-xs">
-                <div class="p-2.5 rounded-lg bg-rose-50">
-                    <div class="font-semibold text-rose-600">1. 优先级优先</div>
-                    <div class="text-gray-500 mt-0.5 leading-relaxed">紧急 > 优先 > 普通</div>
-                </div>
-                <div class="p-2.5 rounded-lg bg-amber-50">
-                    <div class="font-semibold text-amber-600">2. 产能饱和预警</div>
-                    <div class="text-gray-500 mt-0.5 leading-relaxed">超产能自动延后并提示</div>
-                </div>
-                <div class="p-2.5 rounded-lg bg-emerald-50">
-                    <div class="font-semibold text-emerald-600">3. 交付紧急度</div>
-                    <div class="text-gray-500 mt-0.5 leading-relaxed">越接近交货日越优先</div>
-                </div>
-                <div class="p-2.5 rounded-lg bg-sky-50">
-                    <div class="font-semibold text-sky-600">4. 同类集中制作</div>
-                    <div class="text-gray-500 mt-0.5 leading-relaxed">同分类产品集中排产</div>
-                </div>
-            </div>
+            ${headerButtons}
         </div>
 
         <!-- 3块统计 -->
-        <div class="grid grid-cols-3 gap-3">
-            <div class="bg-white rounded-2xl p-3.5 shadow-sm text-center">
-                <div class="text-xs text-gray-500">待排订单</div>
-                <div class="text-2xl font-bold text-rose-500 mt-1">${sv.pendingOrderCount}</div>
-                <div class="text-[11px] text-gray-400 mt-0.5">单</div>
+        <div class="grid grid-cols-3 gap-2">
+            <div class="bg-white rounded-2xl p-3 shadow-sm text-center">
+                <div class="text-[11px] text-gray-500">待排订单</div>
+                <div class="text-xl font-bold text-rose-500 mt-0.5">${sv.pendingOrderCount}</div>
+                <div class="text-[10px] text-gray-400 mt-0.5">单</div>
             </div>
-            <div class="bg-white rounded-2xl p-3.5 shadow-sm text-center">
-                <div class="text-xs text-gray-500">待排工时</div>
-                <div class="text-2xl font-bold text-blue-500 mt-1">${sv.totalHours}</div>
-                <div class="text-[11px] text-gray-400 mt-0.5">小时</div>
+            <div class="bg-white rounded-2xl p-3 shadow-sm text-center">
+                <div class="text-[11px] text-gray-500">待排工时</div>
+                <div class="text-xl font-bold text-blue-500 mt-0.5">${sv.totalHours}</div>
+                <div class="text-[10px] text-gray-400 mt-0.5">小时</div>
             </div>
-            <div class="bg-white rounded-2xl p-3.5 shadow-sm text-center">
-                <div class="text-xs text-gray-500">需排天数</div>
-                <div class="text-2xl font-bold text-emerald-500 mt-1">${sv.daysNeeded}</div>
-                <div class="text-[11px] text-gray-400 mt-0.5">个工作日</div>
+            <div class="bg-white rounded-2xl p-3 shadow-sm text-center">
+                <div class="text-[11px] text-gray-500">需排天数</div>
+                <div class="text-xl font-bold text-emerald-500 mt-0.5">${sv.daysNeeded}</div>
+                <div class="text-[10px] text-gray-400 mt-0.5">工作日</div>
+            </div>
+        </div>
+
+        <!-- 产能/规则小贴士 -->
+        <div class="mt-3 bg-white rounded-2xl px-3 py-2.5 shadow-sm flex items-center gap-2 text-xs">
+            <span class="text-base">💡</span>
+            <div class="flex-1 text-gray-500 leading-relaxed">
+                制作日默认 = 交付日前一天；日产能 = 人工 × 工时 = <b class="text-gray-700">${sv.capacity || (function(){const s=Store.getSettings();return (parseFloat(s.workHoursPerDay)||8)*(parseInt(s.workers)||1);})()}h</b>；超产能订单自动顺延。
             </div>
         </div>
 
         <!-- 排产日程 -->
-        <div class="space-y-3" id="schedule-dates"></div>
+        <div class="space-y-3 mt-3" id="schedule-dates"></div>
     `;
 
-    const today = new Date();
     const datesHtml = sv.dates.map((dg, i) => {
         const headerBg = dg.isToday
             ? 'bg-gradient-to-r from-slate-800 to-slate-700'
@@ -1047,6 +1058,17 @@ function renderSchedule() {
                 const p = Store.getProductById(it.productId);
                 return `<li>${p ? p.name : (it.name || '产品')} × ${it.qty}</li>`;
             }).join('');
+            // 操作按钮：和订单、工作台一致
+            let actionBtn = '';
+            if (item.status === 'pending') {
+                actionBtn = `<button onclick="startProduce(${item.orderId})" class="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm flex items-center gap-1.5 hover:bg-blue-600 font-medium">📝 开始制作</button>`;
+            } else if (item.status === 'producing') {
+                actionBtn = `<button onclick="completeProduce(${item.orderId})" class="px-4 py-2 bg-purple-500 text-white rounded-lg text-sm flex items-center gap-1.5 hover:bg-purple-600 font-medium">✅ 制作完成</button>`;
+            } else if (item.status === 'ready') {
+                actionBtn = `<button onclick="pickupOrder(${item.orderId})" class="px-4 py-2 bg-green-500 text-white rounded-lg text-sm flex items-center gap-1.5 hover:bg-green-600 font-medium">📦 确认取货</button>`;
+            } else {
+                actionBtn = `<button onclick="openOrderModal(${item.orderId})" class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm hover:bg-gray-200">查看</button>`;
+            }
             return `
             <div class="bg-white rounded-xl p-3 border border-gray-100 shadow-sm">
                 <div class="flex justify-between items-start">
@@ -1064,12 +1086,15 @@ function renderSchedule() {
                     <span class="text-gray-500">📦 交付日：${fmtDate(item.deliveryDate)}</span>
                     <span class="${st.bg} px-2 py-0.5 rounded-md">${st.text}</span>
                 </div>
+                <div class="mt-2.5 flex justify-end">
+                    ${actionBtn}
+                </div>
             </div>`;
         }).join('') : `<div class="py-10 text-center text-gray-400 text-sm bg-slate-50/60 rounded-xl border border-dashed border-gray-200">
             📭 ${dg.isToday ? '今日' : '该日'}暂无排产
         </div>`;
 
-        // 标题栏：具体公历日期 + 周几 + 农历日期
+        // 标题栏：具体公历日期 + 周几 + 农历日期 + 已保存小标
         let targetDate;
         try {
             const [yy, mm, dd] = dg.date.split('-').map(n => parseInt(n, 10));
@@ -1077,7 +1102,8 @@ function renderSchedule() {
         } catch (e) { targetDate = new Date(); }
         const lunarStr = getLunarShort(targetDate);
         const todayBadge = dg.isToday ? `<span class="inline-block mr-1.5 px-2 py-0.5 rounded-full bg-yellow-400/90 text-slate-900 text-[10px] font-bold align-middle" style="box-shadow:0 1px 3px rgba(0,0,0,.2)">今</span>` : '';
-        const title = `${todayBadge}${dg.monthNum}月${dg.dayNum}日 · ${dg.weekday}`;
+        const savedBadge = dg.hasSaved ? `<span class="ml-1.5 inline-block px-1.5 py-0.5 rounded bg-emerald-500/90 text-white text-[10px] align-middle">已保存</span>` : '';
+        const title = `${todayBadge}${dg.monthNum}月${dg.dayNum}日 · ${dg.weekday}${savedBadge}`;
         const titleLunar = lunarStr ? `<div class="text-[11px] opacity-80 mt-0.5">农历 · ${lunarStr}</div>` : '';
 
         return `
@@ -1101,6 +1127,18 @@ function renderSchedule() {
     }).join('');
 
     $('#schedule-dates').innerHTML = datesHtml;
+}
+
+// 点击「一键排产 / 更新排产」按钮
+function doAutoSchedule() {
+    try {
+        const res = Scheduler.autoSchedule(7);
+        showToast(`✨ 排产完成 · 共 ${res.orderCount} 单 / ${res.updatedDates.length} 天`, 'success');
+        renderSchedule();
+    } catch (e) {
+        console.error(e);
+        showToast('排产失败：' + (e.message || e), 'error');
+    }
 }
 
 // ============ 产品模态框 ============

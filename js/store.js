@@ -5,7 +5,8 @@ const Store = (function () {
     const KEYS = {
         PRODUCTS: 'xy_products',       // 产品/工时配置
         ORDERS: 'xy_orders',           // 订单
-        SCHEDULE: 'xy_schedule',       // 排产
+        SCHEDULE: 'xy_schedule',       // 排产（旧）
+        SCHEDULE_V2: 'xy_schedule_v2', // 排产（新：date → { orderIds, generatedAt }）
         FINANCE: 'xy_finance',         // 财务记录
         SETTINGS: 'xy_settings'        // 设置
     };
@@ -186,12 +187,37 @@ const Store = (function () {
     }
 
     // ============ 排产 API ============
+    // 旧版兼容
     function getSchedule() {
         return get(KEYS.SCHEDULE, []);
     }
-
     function saveSchedule(schedule) {
         return set(KEYS.SCHEDULE, schedule);
+    }
+
+    // 新版：按日期 → orderIds 映射，可持久化生成时间
+    // scheduleObj: { [YYYY-MM-DD]: { orderIds: [1,2], generatedAt: ISO } }
+    function getScheduleMap() {
+        return get(KEYS.SCHEDULE_V2, {});
+    }
+    function saveScheduleMap(map) {
+        return set(KEYS.SCHEDULE_V2, map);
+    }
+    function setScheduleForDate(date, orderIdsArray) {
+        const map = getScheduleMap();
+        map[date] = {
+            orderIds: Array.from(new Set(orderIdsArray || [])),
+            generatedAt: new Date().toISOString()
+        };
+        saveScheduleMap(map);
+        return map[date];
+    }
+    function removeScheduleBefore(date) {
+        const map = getScheduleMap();
+        const keys = Object.keys(map).filter(k => k < date);
+        keys.forEach(k => delete map[k]);
+        saveScheduleMap(map);
+        return keys.length;
     }
 
     // ============ 财务 API ============
@@ -269,6 +295,10 @@ const Store = (function () {
         // Schedule
         getSchedule,
         saveSchedule,
+        getScheduleMap,
+        saveScheduleMap,
+        setScheduleForDate,
+        removeScheduleBefore,
         // Finance
         getFinance,
         saveFinance,
