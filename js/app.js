@@ -853,11 +853,11 @@ function renderFinance() {
             </div>
         </div>
 
-        <!-- 近30天营收趋势 -->
+        <!-- 未来25天营收趋势 -->
         <div class="bg-white rounded-2xl p-4 shadow-sm">
             <div class="flex items-center justify-between mb-3">
                 <div>
-                    <div class="font-bold text-gray-800 text-sm">📈 近30天营收趋势</div>
+                    <div class="font-bold text-gray-800 text-sm">📈 未来25天营收趋势</div>
                     <div class="text-xs text-gray-400 mt-0.5">（按交货日期归属）</div>
                 </div>
                 <div class="flex items-center gap-2 text-[11px]">

@@ -168,7 +168,7 @@ const Scheduler = (function () {
         };
     }
 
-    // 近30天营收趋势
+    // 未来25天营收趋势（当前日期往后）
     function getLast30DaysTrend() {
         const labels = [];
         const revenueArr = [];
@@ -176,8 +176,8 @@ const Scheduler = (function () {
         const orders = Store.getOrders();
 
         const today = new Date();
-        for (let i = 29; i >= 0; i--) {
-            const d = Store.addDays(today, -i);
+        for (let i = 0; i < 25; i++) {
+            const d = Store.addDays(today, i);
             const dateStr = Store.formatDate(d);
             const labelShort = (d.getMonth() + 1) + '-' + String(d.getDate()).padStart(2, '0');
             labels.push(labelShort);
