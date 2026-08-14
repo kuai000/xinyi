@@ -5,11 +5,532 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#1e293b">
     <title>鑫意花样馒头 - 智能排产系统</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
+    </script>
+    <style>
+        /* ===== 全局重置 & 基础 ===== */
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            padding-bottom: 80px;
+            overscroll-behavior: none;
+        }
+
+        /* ===== Tab 导航 ===== */
+        .tabbar .tab-btn {
+            color: #94a3b8;
+            transition: color 0.2s, transform 0.15s;
+            position: relative;
+            user-select: none;
+            touch-action: manipulation;
+        }
+        .tabbar .tab-btn svg {
+            transition: stroke 0.2s;
+        }
+        .tabbar .tab-btn.active {
+            color: #e11d48;
+        }
+        .tabbar .tab-btn.active svg {
+            stroke: #e11d48;
+        }
+        .tabbar .tab-btn:active {
+            transform: scale(0.92);
+        }
+        .tabbar .tab-btn .badge-dot {
+            position: absolute;
+            top: 2px;
+            right: 50%;
+            transform: translateX(calc(50% + 14px));
+            width: 8px;
+            height: 8px;
+            background: #ef4444;
+            border-radius: 50%;
+            border: 2px solid #fff;
+        }
+
+        /* ===== 卡片 & 列表 ===== */
+        .card {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
+            padding: 16px;
+            transition: box-shadow 0.2s;
+        }
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .card-title {
+            font-weight: 600;
+            font-size: 1rem;
+            color: #0f172a;
+        }
+
+        /* ===== 按钮 ===== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-weight: 500;
+            font-size: 0.875rem;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+            touch-action: manipulation;
+            user-select: none;
+            white-space: nowrap;
+        }
+        .btn:active {
+            transform: scale(0.95);
+        }
+        .btn-primary {
+            background: #e11d48;
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: #be123c;
+        }
+        .btn-primary:active {
+            background: #9f1239;
+        }
+        .btn-outline {
+            background: transparent;
+            color: #e11d48;
+            border: 1.5px solid #e11d48;
+        }
+        .btn-outline:hover {
+            background: #fef2f2;
+        }
+        .btn-ghost {
+            background: transparent;
+            color: #64748b;
+        }
+        .btn-ghost:hover {
+            background: #f1f5f9;
+        }
+        .btn-success {
+            background: #16a34a;
+            color: #fff;
+        }
+        .btn-success:hover {
+            background: #15803d;
+        }
+        .btn-danger {
+            background: #dc2626;
+            color: #fff;
+        }
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+        .btn-sm {
+            padding: 4px 12px;
+            font-size: 0.75rem;
+            border-radius: 8px;
+        }
+        .btn-block {
+            width: 100%;
+            justify-content: center;
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        /* ===== 表单 ===== */
+        .form-group {
+            margin-bottom: 14px;
+        }
+        .form-label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #475569;
+            margin-bottom: 4px;
+        }
+        .form-control {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            background: #fff;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+            color: #0f172a;
+        }
+        .form-control:focus {
+            border-color: #e11d48;
+            box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.15);
+        }
+        .form-control::placeholder {
+            color: #94a3b8;
+        }
+        .form-control-sm {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+        select.form-control {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23475569' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 36px;
+        }
+        .form-hint {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        /* ===== 模态框 ===== */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            z-index: 50;
+            animation: fadeIn 0.25s ease;
+        }
+        .modal-box {
+            background: #fff;
+            border-radius: 20px 20px 0 0;
+            padding: 20px 20px 30px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+        .modal-handle {
+            width: 40px;
+            height: 4px;
+            background: #cbd5e1;
+            border-radius: 4px;
+            margin: 0 auto 16px;
+        }
+        .modal-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 16px;
+            color: #0f172a;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+        @keyframes slideUp {
+            from {
+                transform: translateY(40px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* ===== Toast ===== */
+        .toast {
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+            pointer-events: auto;
+            animation: toastIn 0.3s ease;
+            max-width: 90vw;
+            text-align: center;
+        }
+        .toast-success {
+            background: #16a34a;
+        }
+        .toast-error {
+            background: #dc2626;
+        }
+        .toast-warning {
+            background: #d97706;
+        }
+        @keyframes toastIn {
+            from {
+                transform: translateY(-20px) scale(0.95);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* ===== 工具类 ===== */
+        .flex-center {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .gap-1 {
+            gap: 4px;
+        }
+        .gap-2 {
+            gap: 8px;
+        }
+        .gap-3 {
+            gap: 12px;
+        }
+        .gap-4 {
+            gap: 16px;
+        }
+        .text-ellipsis {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .shrink-0 {
+            flex-shrink: 0;
+        }
+        .w-full {
+            width: 100%;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .text-muted {
+            color: #94a3b8;
+        }
+        .text-sm {
+            font-size: 0.8rem;
+        }
+        .text-xs {
+            font-size: 0.7rem;
+        }
+        .font-medium {
+            font-weight: 500;
+        }
+        .font-semibold {
+            font-weight: 600;
+        }
+        .mt-1 {
+            margin-top: 4px;
+        }
+        .mt-2 {
+            margin-top: 8px;
+        }
+        .mt-3 {
+            margin-top: 12px;
+        }
+        .mb-1 {
+            margin-bottom: 4px;
+        }
+        .mb-2 {
+            margin-bottom: 8px;
+        }
+        .p-0 {
+            padding: 0;
+        }
+
+        /* ===== 排产甘特图简易样式 ===== */
+        .gantt-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .gantt-label {
+            width: 70px;
+            flex-shrink: 0;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #475569;
+        }
+        .gantt-track {
+            flex: 1;
+            height: 28px;
+            background: #f1f5f9;
+            border-radius: 6px;
+            position: relative;
+            overflow: hidden;
+        }
+        .gantt-bar {
+            height: 100%;
+            border-radius: 6px;
+            background: linear-gradient(135deg, #e11d48, #f43f5e);
+            display: flex;
+            align-items: center;
+            padding-left: 6px;
+            font-size: 0.6rem;
+            color: #fff;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: width 0.3s;
+            min-width: 20px;
+        }
+        .gantt-bar.other {
+            background: linear-gradient(135deg, #3b82f6, #60a5fa);
+        }
+
+        /* ===== 统计卡片 ===== */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        .stat-item {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 12px 14px;
+            text-align: center;
+        }
+        .stat-item .num {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .stat-item .label {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            margin-top: 2px;
+        }
+
+        /* ===== 订单状态标签 ===== */
+        .status-badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 0.65rem;
+            font-weight: 500;
+        }
+        .status-pending {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        .status-confirmed {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+        .status-producing {
+            background: #ede9fe;
+            color: #7c3aed;
+        }
+        .status-done {
+            background: #d1fae5;
+            color: #059669;
+        }
+        .status-canceled {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        /* ===== 滚动条美化 ===== */
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        /* ===== 响应式微调 ===== */
+        @media (min-width: 640px) {
+            .stat-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            .modal-box {
+                border-radius: 24px;
+                margin-bottom: 20px;
+                max-height: 80vh;
+            }
+        }
+        @media (max-width: 380px) {
+            .tabbar .tab-btn {
+                font-size: 0.6rem;
+                padding: 6px 2px;
+            }
+            .tabbar .tab-btn svg {
+                width: 20px;
+                height: 20px;
+            }
+            .card {
+                padding: 12px;
+            }
+        }
+
+        /* ===== 空状态 ===== */
+        .empty-state {
+            text-align: center;
+            padding: 32px 16px;
+            color: #94a3b8;
+        }
+        .empty-state svg {
+            width: 56px;
+            height: 56px;
+            stroke: #cbd5e1;
+            margin-bottom: 12px;
+        }
+        .empty-state p {
+            font-size: 0.9rem;
+        }
+
+        /* ===== 列表项点击 ===== */
+        .list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f5f9;
+            cursor: default;
+        }
+        .list-item:last-child {
+            border-bottom: none;
+        }
+        .list-item .info {
+            flex: 1;
+            min-width: 0;
+        }
+        .list-item .info .name {
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        .list-item .info .desc {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin-top: 1px;
+        }
+        .list-item .action {
+            flex-shrink: 0;
+            margin-left: 8px;
+        }
+    </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
+<body>
     <div id="app" class="min-h-screen pb-20">
         <!-- 顶部导航栏 -->
         <header id="top-header" class="bg-slate-800 text-white sticky top-0 z-40 shadow-md">
@@ -67,8 +588,948 @@
     <!-- Toast 提示 -->
     <div id="toast-container" class="fixed top-20 left-1/2 -translate-x-1/2 z-[60] pointer-events-none"></div>
 
-    <script src="js/store.js"></script>
-    <script src="js/scheduler.js"></script>
-    <script src="js/app.js"></script>
+    <script>
+        // ============================================================
+        //  🗄️  store.js  —  数据存储层（内存 + localStorage）
+        // ============================================================
+        const Store = {
+            _data: null,
+            _key: 'xinyi_production_data',
+
+            init() {
+                const saved = localStorage.getItem(this._key);
+                if (saved) {
+                    try {
+                        this._data = JSON.parse(saved);
+                        // 确保各字段存在
+                        if (!this._data.products) this._data.products = [];
+                        if (!this._data.orders) this._data.orders = [];
+                        if (!this._data.schedules) this._data.schedules = [];
+                        if (!this._data.finance) this._data.finance = { records: [] };
+                        if (!this._data.settings) this._data.settings = { workHours: 8 };
+                        return;
+                    } catch (_) { /* ignore */ }
+                }
+                // 默认数据
+                this._data = {
+                    products: [
+                        { id: 'p1', name: '原味馒头', price: 2.5, laborHours: 0.5, category: '常规' },
+                        { id: 'p2', name: '红糖馒头', price: 3.0, laborHours: 0.6, category: '常规' },
+                        { id: 'p3', name: '杂粮馒头', price: 4.0, laborHours: 0.7, category: '杂粮' },
+                        { id: 'p4', name: '玫瑰馒头', price: 5.0, laborHours: 0.9, category: '花样' },
+                    ],
+                    orders: [
+                        { id: 'o1', productId: 'p1', qty: 100, deadline: '2026-08-15', status: 'confirmed', createdAt: '2026-08-10' },
+                        { id: 'o2', productId: 'p2', qty: 80, deadline: '2026-08-16', status: 'pending', createdAt: '2026-08-11' },
+                        { id: 'o3', productId: 'p3', qty: 50, deadline: '2026-08-14', status: 'producing', createdAt: '2026-08-09' },
+                    ],
+                    schedules: [
+                        { id: 's1', orderId: 'o1', productId: 'p1', qty: 100, date: '2026-08-13', shift: '日班', status: 'pending' },
+                        { id: 's2', orderId: 'o3', productId: 'p3', qty: 50, date: '2026-08-13', shift: '日班', status: 'done' },
+                    ],
+                    finance: { records: [] },
+                    settings: { workHours: 8 }
+                };
+                this.save();
+            },
+
+            save() {
+                localStorage.setItem(this._key, JSON.stringify(this._data));
+            },
+
+            get() { return this._data; },
+
+            // --- Products ---
+            getProducts() { return this._data.products; },
+            addProduct(product) {
+                product.id = 'p' + Date.now();
+                this._data.products.push(product);
+                this.save();
+                return product;
+            },
+            updateProduct(id, updates) {
+                const idx = this._data.products.findIndex(p => p.id === id);
+                if (idx === -1) return null;
+                this._data.products[idx] = { ...this._data.products[idx], ...updates };
+                this.save();
+                return this._data.products[idx];
+            },
+            deleteProduct(id) {
+                this._data.products = this._data.products.filter(p => p.id !== id);
+                this.save();
+            },
+            getProduct(id) { return this._data.products.find(p => p.id === id); },
+
+            // --- Orders ---
+            getOrders() { return this._data.orders; },
+            addOrder(order) {
+                order.id = 'o' + Date.now();
+                order.createdAt = new Date().toISOString().slice(0, 10);
+                this._data.orders.push(order);
+                this.save();
+                return order;
+            },
+            updateOrder(id, updates) {
+                const idx = this._data.orders.findIndex(o => o.id === id);
+                if (idx === -1) return null;
+                this._data.orders[idx] = { ...this._data.orders[idx], ...updates };
+                this.save();
+                return this._data.orders[idx];
+            },
+            deleteOrder(id) {
+                this._data.orders = this._data.orders.filter(o => o.id !== id);
+                this.save();
+            },
+            getOrder(id) { return this._data.orders.find(o => o.id === id); },
+
+            // --- Schedules ---
+            getSchedules() { return this._data.schedules; },
+            addSchedule(sch) {
+                sch.id = 's' + Date.now();
+                this._data.schedules.push(sch);
+                this.save();
+                return sch;
+            },
+            updateSchedule(id, updates) {
+                const idx = this._data.schedules.findIndex(s => s.id === id);
+                if (idx === -1) return null;
+                this._data.schedules[idx] = { ...this._data.schedules[idx], ...updates };
+                this.save();
+                return this._data.schedules[idx];
+            },
+            deleteSchedule(id) {
+                this._data.schedules = this._data.schedules.filter(s => s.id !== id);
+                this.save();
+            },
+            getSchedule(id) { return this._data.schedules.find(s => s.id === id); },
+
+            // --- Finance ---
+            getFinance() { return this._data.finance; },
+            addFinanceRecord(rec) {
+                rec.id = 'f' + Date.now();
+                rec.date = rec.date || new Date().toISOString().slice(0, 10);
+                this._data.finance.records.push(rec);
+                this.save();
+                return rec;
+            },
+
+            // --- Settings ---
+            getSettings() { return this._data.settings; },
+            updateSettings(updates) {
+                this._data.settings = { ...this._data.settings, ...updates };
+                this.save();
+                return this._data.settings;
+            }
+        };
+
+        // ============================================================
+        //  🧮  scheduler.js  —  排产计算引擎
+        // ============================================================
+        const Scheduler = {
+            // 计算某产品生产指定数量所需工时（小时）
+            calcLaborHours(product, qty) {
+                if (!product || !product.laborHours) return 0;
+                return product.laborHours * qty;
+            },
+
+            // 计算某天可用工时（基于设置）
+            getAvailableHours(date, settings) {
+                // 简化：每天固定工时，周末减半（模拟）
+                const day = new Date(date).getDay();
+                const base = settings?.workHours || 8;
+                if (day === 0 || day === 6) return base * 0.5;
+                return base;
+            },
+
+            // 生成排产建议（按订单优先级：deadline越近越优先）
+            generateSchedule(orders, products, settings) {
+                const result = [];
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                // 按截止日期排序
+                const sorted = [...orders].filter(o => o.status !== 'canceled' && o.status !== 'done')
+                    .sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
+
+                for (const order of sorted) {
+                    const product = products.find(p => p.id === order.productId);
+                    if (!product) continue;
+                    const hours = this.calcLaborHours(product, order.qty);
+                    const deadline = new Date(order.deadline);
+                    const daysUntil = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24));
+                    // 简单策略：如果剩余天数 <= 2 则排到今天
+                    let date = today.toISOString().slice(0, 10);
+                    if (daysUntil > 2) {
+                        // 往后推
+                        const d = new Date(today);
+                        d.setDate(d.getDate() + Math.min(daysUntil - 1, 3));
+                        date = d.toISOString().slice(0, 10);
+                    }
+                    result.push({
+                        orderId: order.id,
+                        productId: product.id,
+                        productName: product.name,
+                        qty: order.qty,
+                        laborHours: hours,
+                        date: date,
+                        status: 'pending'
+                    });
+                }
+                return result;
+            }
+        };
+
+        // ============================================================
+        //  📱  app.js  —  主应用：渲染、交互、路由
+        // ============================================================
+        const App = {
+            currentTab: 'dashboard',
+            charts: {},
+            editingProductId: null,
+            editingOrderId: null,
+
+            init() {
+                Store.init();
+                this.bindTabs();
+                this.bindGlobalEvents();
+                this.navigate('dashboard');
+                this.updateClock();
+                setInterval(() => this.updateClock(), 60000);
+            },
+
+            updateClock() {
+                const now = new Date();
+                const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September',
+                    'October', 'November', 'December'
+                ];
+                const dateStr =
+                    `${now.getFullYear()}年${String(now.getMonth()+1).padStart(2,'0')}月${String(now.getDate()).padStart(2,'0')}日 ${days[now.getDay()]}`;
+                document.getElementById('page-subtitle').textContent = dateStr;
+            },
+
+            bindTabs() {
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const tab = btn.dataset.tab;
+                        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        this.navigate(tab);
+                    });
+                });
+            },
+
+            bindGlobalEvents() {
+                // 点击模态框外部关闭
+                document.getElementById('modal-container').addEventListener('click', (e) => {
+                    if (e.target === e.currentTarget) this.closeModal();
+                });
+                // 监听键盘 ESC
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') this.closeModal();
+                });
+            },
+
+            // ---------- 路由 ----------
+            navigate(tab) {
+                this.currentTab = tab;
+                const titles = {
+                    dashboard: '工作台',
+                    orders: '订单管理',
+                    schedule: '排产看板',
+                    products: '工时与产品',
+                    finance: '财务统计',
+                    settings: '设置'
+                };
+                document.getElementById('page-title').textContent = titles[tab] || '工作台';
+                const action = document.getElementById('header-action');
+                action.innerHTML = '';
+                if (tab === 'products') {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn btn-primary btn-sm';
+                    btn.innerHTML = '+ 添加';
+                    btn.addEventListener('click', () => this.showProductModal());
+                    action.appendChild(btn);
+                } else if (tab === 'orders') {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn btn-primary btn-sm';
+                    btn.innerHTML = '+ 订单';
+                    btn.addEventListener('click', () => this.showOrderModal());
+                    action.appendChild(btn);
+                } else if (tab === 'schedule') {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn btn-outline btn-sm text-white border-white/40 hover:bg-white/10';
+                    btn.innerHTML = '⚡ 自动排产';
+                    btn.addEventListener('click', () => this.autoSchedule());
+                    action.appendChild(btn);
+                }
+                this.renderTab(tab);
+                // 切换tab后重新绘制图表（如果存在）
+                setTimeout(() => {
+                    if (tab === 'dashboard') this.renderCharts();
+                }, 100);
+            },
+
+            // ---------- 渲染各Tab ----------
+            renderTab(tab) {
+                const main = document.getElementById('main-content');
+                switch (tab) {
+                    case 'dashboard':
+                        this.renderDashboard(main);
+                        break;
+                    case 'orders':
+                        this.renderOrders(main);
+                        break;
+                    case 'schedule':
+                        this.renderSchedule(main);
+                        break;
+                    case 'products':
+                        this.renderProducts(main);
+                        break;
+                    case 'finance':
+                        this.renderFinance(main);
+                        break;
+                    case 'settings':
+                        this.renderSettings(main);
+                        break;
+                    default:
+                        main.innerHTML = '<div class="card"><p class="text-muted">页面建设中...</p></div>';
+                }
+            },
+
+            // ==========================================================
+            //  📊  Dashboard
+            // ==========================================================
+            renderDashboard(el) {
+                const data = Store.get();
+                const products = data.products;
+                const orders = data.orders;
+                const schedules = data.schedules;
+
+                const totalOrders = orders.length;
+                const pendingOrders = orders.filter(o => o.status === 'pending' || o.status === 'confirmed').length;
+                const totalProducts = products.length;
+                const todaySchedules = schedules.filter(s => s.date === new Date().toISOString().slice(0, 10));
+
+                el.innerHTML = `
+                    <div class="stat-grid">
+                        <div class="stat-item"><div class="num">${totalOrders}</div><div class="label">总订单</div></div>
+                        <div class="stat-item"><div class="num">${pendingOrders}</div><div class="label">待处理</div></div>
+                        <div class="stat-item"><div class="num">${totalProducts}</div><div class="label">产品数</div></div>
+                        <div class="stat-item"><div class="num">${todaySchedules.length}</div><div class="label">今日排产</div></div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header"><span class="card-title">📈 近7天产量趋势</span></div>
+                        <div style="height:180px;"><canvas id="trendChart"></canvas></div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header"><span class="card-title">⏳ 待处理订单</span></div>
+                        <div id="pending-list">
+                            ${pendingOrders === 0 ? '<div class="empty-state"><p>🎉 暂无待处理订单</p></div>' :
+                            orders.filter(o => o.status === 'pending' || o.status === 'confirmed').slice(0,5).map(o => {
+                                const p = products.find(p => p.id === o.productId);
+                                return `<div class="list-item">
+                                    <div class="info"><div class="name">${p ? p.name : '未知产品'} × ${o.qty}</div>
+                                    <div class="desc">截止 ${o.deadline} · ${o.status === 'pending' ? '⏳ 待确认' : '✅ 已确认'}</div></div>
+                                    <span class="status-badge ${o.status === 'pending' ? 'status-pending' : 'status-confirmed'}">${o.status === 'pending' ? '待确认' : '已确认'}</span>
+                                </div>`;
+                            }).join('')}
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header"><span class="card-title">📋 今日排产</span></div>
+                        <div id="today-schedule">
+                            ${todaySchedules.length === 0 ? '<div class="empty-state"><p>今日暂无排产计划</p></div>' :
+                            todaySchedules.map(s => {
+                                const p = products.find(p => p.id === s.productId);
+                                return `<div class="list-item"><div class="info"><div class="name">${p ? p.name : '未知'} × ${s.qty}</div>
+                                <div class="desc">${s.shift || '日班'} · ${s.status === 'done' ? '✅ 已完成' : '⏳ 进行中'}</div></div>
+                                <span class="status-badge ${s.status === 'done' ? 'status-done' : 'status-producing'}">${s.status === 'done' ? '已完成' : '进行中'}</span>
+                            </div>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+                // 图表延迟渲染
+                setTimeout(() => this.renderCharts(), 200);
+            },
+
+            renderCharts() {
+                const canvas = document.getElementById('trendChart');
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                // 生成近7天产量模拟数据
+                const data = Store.get();
+                const schedules = data.schedules;
+                const days = [];
+                const counts = [];
+                for (let i = 6; i >= 0; i--) {
+                    const d = new Date();
+                    d.setDate(d.getDate() - i);
+                    const key = d.toISOString().slice(0, 10);
+                    days.push(key.slice(5));
+                    const total = schedules.filter(s => s.date === key && s.status === 'done')
+                        .reduce((sum, s) => sum + s.qty, 0);
+                    counts.push(total);
+                }
+                if (this.charts.trend) {
+                    this.charts.trend.destroy();
+                }
+                this.charts.trend = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: days,
+                        datasets: [{
+                            label: '产量 (个)',
+                            data: counts,
+                            borderColor: '#e11d48',
+                            backgroundColor: 'rgba(225,29,72,0.08)',
+                            fill: true,
+                            tension: 0.3,
+                            pointBackgroundColor: '#e11d48',
+                            pointRadius: 3,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.04)' } },
+                            x: { grid: { display: false } }
+                        }
+                    }
+                });
+            },
+
+            // ==========================================================
+            //  📦  Orders
+            // ==========================================================
+            renderOrders(el) {
+                const data = Store.get();
+                const orders = data.orders;
+                const products = data.products;
+
+                const statusMap = {
+                    pending: '待确认',
+                    confirmed: '已确认',
+                    producing: '生产中',
+                    done: '已完成',
+                    canceled: '已取消'
+                };
+                const statusClass = {
+                    pending: 'status-pending',
+                    confirmed: 'status-confirmed',
+                    producing: 'status-producing',
+                    done: 'status-done',
+                    canceled: 'status-canceled'
+                };
+
+                el.innerHTML = `
+                    <div class="card">
+                        ${orders.length === 0 ? '<div class="empty-state"><p>📭 暂无订单，点击右上角添加</p></div>' :
+                        orders.map(o => {
+                            const p = products.find(p => p.id === o.productId);
+                            return `<div class="list-item">
+                                <div class="info">
+                                    <div class="name">${p ? p.name : '已删除产品'} × ${o.qty}</div>
+                                    <div class="desc">截止 ${o.deadline} · 创建 ${o.createdAt}</div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="status-badge ${statusClass[o.status] || 'status-pending'}">${statusMap[o.status] || o.status}</span>
+                                    <button class="btn btn-ghost btn-sm" data-action="edit-order" data-id="${o.id}">✎</button>
+                                    <button class="btn btn-ghost btn-sm text-red-500" data-action="delete-order" data-id="${o.id}">✕</button>
+                                </div>
+                            </div>`;
+                        }).join('')}
+                    </div>
+                `;
+                // 事件绑定
+                el.querySelectorAll('[data-action="edit-order"]').forEach(btn => {
+                    btn.addEventListener('click', () => this.showOrderModal(btn.dataset.id));
+                });
+                el.querySelectorAll('[data-action="delete-order"]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        if (confirm('确定删除此订单吗？')) {
+                            Store.deleteOrder(btn.dataset.id);
+                            this.renderTab('orders');
+                            this.toast('订单已删除', 'success');
+                        }
+                    });
+                });
+            },
+
+            // ==========================================================
+            //  📅  Schedule
+            // ==========================================================
+            renderSchedule(el) {
+                const data = Store.get();
+                const schedules = data.schedules;
+                const products = data.products;
+                const orders = data.orders;
+
+                // 按日期分组
+                const groups = {};
+                schedules.forEach(s => {
+                    if (!groups[s.date]) groups[s.date] = [];
+                    groups[s.date].push(s);
+                });
+                const dates = Object.keys(groups).sort();
+
+                let html = `
+                    <div class="card">
+                        <div class="card-header"><span class="card-title">📅 排产日历</span>
+                            <span class="text-xs text-muted">共 ${schedules.length} 项</span>
+                        </div>
+                        ${dates.length === 0 ? '<div class="empty-state"><p>暂无排产计划，点击「自动排产」生成</p></div>' :
+                        dates.map(date => {
+                            const items = groups[date];
+                            const totalQty = items.reduce((sum, s) => sum + s.qty, 0);
+                            return `<div style="margin-bottom:12px;">
+                                <div class="font-semibold text-sm text-slate-700 mb-1">${date} <span class="text-xs text-muted font-normal">共 ${totalQty} 个</span></div>
+                                ${items.map(s => {
+                                    const p = products.find(p => p.id === s.productId);
+                                    const o = orders.find(o => o.id === s.orderId);
+                                    return `<div class="gantt-row">
+                                        <div class="gantt-label">${p ? p.name : '未知'}</div>
+                                        <div class="gantt-track">
+                                            <div class="gantt-bar ${s.status === 'done' ? 'other' : ''}" style="width:${Math.min(100, s.qty/2)}%">
+                                                ${s.qty}个
+                                            </div>
+                                        </div>
+                                        <span class="text-xs text-muted shrink-0">${s.status === 'done' ? '✅' : '⏳'}</span>
+                                    </div>`;
+                                }).join('')}
+                            </div>`;
+                        }).join('')}
+                    </div>
+                `;
+                el.innerHTML = html;
+            },
+
+            autoSchedule() {
+                const data = Store.get();
+                const orders = data.orders;
+                const products = data.products;
+                const settings = data.settings;
+                const suggestions = Scheduler.generateSchedule(orders, products, settings);
+
+                if (suggestions.length === 0) {
+                    this.toast('没有需要排产的订单', 'warning');
+                    return;
+                }
+
+                // 清除旧排产（可选）
+                // 这里追加
+                let added = 0;
+                for (const s of suggestions) {
+                    // 检查是否已存在相同订单的排产
+                    const exist = data.schedules.find(sch => sch.orderId === s.orderId);
+                    if (!exist) {
+                        Store.addSchedule({
+                            orderId: s.orderId,
+                            productId: s.productId,
+                            qty: s.qty,
+                            date: s.date,
+                            shift: '日班',
+                            status: 'pending'
+                        });
+                        added++;
+                    }
+                }
+                this.toast(`自动排产完成，新增 ${added} 项`, 'success');
+                this.renderTab('schedule');
+            },
+
+            // ==========================================================
+            //  🧾  Products (工时与产品)  ← 核心修改点
+            // ==========================================================
+            renderProducts(el) {
+                const products = Store.getProducts();
+
+                el.innerHTML = `
+                    <div class="card">
+                        <div class="card-header"><span class="card-title">🧾 产品列表</span>
+                            <span class="text-xs text-muted">共 ${products.length} 种</span>
+                        </div>
+                        ${products.length === 0 ? '<div class="empty-state"><p>暂无产品，点击右上角「添加」</p></div>' :
+                        products.map(p => `
+                            <div class="list-item">
+                                <div class="info">
+                                    <div class="name">${p.name}</div>
+                                    <div class="desc">💰 ￥${p.price.toFixed(2)} · ⏱ ${p.laborHours}h/个 · ${p.category || '未分类'}</div>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <button class="btn btn-ghost btn-sm" data-action="edit-product" data-id="${p.id}">✎</button>
+                                    <button class="btn btn-ghost btn-sm text-red-500" data-action="delete-product" data-id="${p.id}">✕</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                el.querySelectorAll('[data-action="edit-product"]').forEach(btn => {
+                    btn.addEventListener('click', () => this.showProductModal(btn.dataset.id));
+                });
+                el.querySelectorAll('[data-action="delete-product"]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        if (confirm('确定删除此产品吗？')) {
+                            Store.deleteProduct(btn.dataset.id);
+                            this.renderTab('products');
+                            this.toast('产品已删除', 'success');
+                        }
+                    });
+                });
+            },
+
+            // ==========================================================
+            //  💰  Finance
+            // ==========================================================
+            renderFinance(el) {
+                const data = Store.get();
+                const records = data.finance.records || [];
+                const total = records.reduce((sum, r) => sum + (r.amount || 0), 0);
+
+                el.innerHTML = `
+                    <div class="stat-grid">
+                        <div class="stat-item"><div class="num">￥${total.toFixed(2)}</div><div class="label">总营收</div></div>
+                        <div class="stat-item"><div class="num">${records.length}</div><div class="label">记录数</div></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-title">📋 财务记录</span>
+                            <button class="btn btn-primary btn-sm" id="add-finance-btn">+ 添加</button>
+                        </div>
+                        ${records.length === 0 ? '<div class="empty-state"><p>暂无财务记录</p></div>' :
+                        records.slice().reverse().map(r => `
+                            <div class="list-item">
+                                <div class="info">
+                                    <div class="name">${r.description || '无描述'} <span class="text-sm text-muted">${r.date || ''}</span></div>
+                                    <div class="desc">${r.type === 'income' ? '📈 收入' : '📉 支出'}</div>
+                                </div>
+                                <span class="font-semibold ${r.type === 'income' ? 'text-green-600' : 'text-red-500'}">${r.type === 'income' ? '+' : '-'}￥${(r.amount || 0).toFixed(2)}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                document.getElementById('add-finance-btn')?.addEventListener('click', () => this.showFinanceModal());
+            },
+
+            // ==========================================================
+            //  ⚙️  Settings
+            // ==========================================================
+            renderSettings(el) {
+                const settings = Store.getSettings();
+                el.innerHTML = `
+                    <div class="card">
+                        <div class="card-title mb-3">⚙️ 系统设置</div>
+                        <div class="form-group">
+                            <label class="form-label">每日工时 (小时)</label>
+                            <input type="number" class="form-control" id="work-hours" value="${settings.workHours || 8}" step="0.5" min="0.5">
+                            <div class="form-hint">用于排产计算，支持小数（如 7.5）</div>
+                        </div>
+                        <button class="btn btn-primary btn-block" id="save-settings">保存设置</button>
+                    </div>
+                    <div class="card">
+                        <div class="card-title mb-3">💾 数据管理</div>
+                        <div class="flex gap-2 flex-wrap">
+                            <button class="btn btn-outline" id="export-data">📤 导出数据</button>
+                            <button class="btn btn-outline" id="import-data">📥 导入数据</button>
+                            <button class="btn btn-danger" id="reset-data">🔄 重置数据</button>
+                        </div>
+                        <input type="file" id="import-file" accept=".json" style="display:none">
+                    </div>
+                `;
+                document.getElementById('save-settings')?.addEventListener('click', () => {
+                    const val = parseFloat(document.getElementById('work-hours').value);
+                    if (isNaN(val) || val <= 0) {
+                        this.toast('请输入有效工时', 'error');
+                        return;
+                    }
+                    Store.updateSettings({ workHours: val });
+                    this.toast('设置已保存', 'success');
+                });
+                document.getElementById('export-data')?.addEventListener('click', () => {
+                    const data = Store.get();
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `xinyi_data_${new Date().toISOString().slice(0,10)}.json`;
+                    a.click();
+                    URL.revokeObjectURL(a.href);
+                    this.toast('数据导出成功', 'success');
+                });
+                document.getElementById('import-data')?.addEventListener('click', () => {
+                    document.getElementById('import-file').click();
+                });
+                document.getElementById('import-file')?.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        try {
+                            const data = JSON.parse(ev.target.result);
+                            if (data.products && data.orders) {
+                                localStorage.setItem(Store._key, JSON.stringify(data));
+                                Store._data = data;
+                                this.toast('数据导入成功', 'success');
+                                this.renderTab(this.currentTab);
+                            } else {
+                                this.toast('无效的数据文件', 'error');
+                            }
+                        } catch (_) {
+                            this.toast('文件解析失败', 'error');
+                        }
+                    };
+                    reader.readAsText(file);
+                    e.target.value = '';
+                });
+                document.getElementById('reset-data')?.addEventListener('click', () => {
+                    if (confirm('确定重置所有数据吗？此操作不可撤销！')) {
+                        localStorage.removeItem(Store._key);
+                        Store.init();
+                        this.toast('数据已重置', 'success');
+                        this.renderTab(this.currentTab);
+                    }
+                });
+            },
+
+            // ==========================================================
+            //  🧩  Product Modal  —  关键修改：支持小数价格
+            // ==========================================================
+            showProductModal(id = null) {
+                this.editingProductId = id;
+                const product = id ? Store.getProduct(id) : null;
+                const isEdit = !!product;
+
+                const html = `
+                    <div class="modal-overlay" id="modal-overlay">
+                        <div class="modal-box">
+                            <div class="modal-handle"></div>
+                            <div class="modal-title">${isEdit ? '编辑产品' : '添加产品'}</div>
+                            <div class="form-group">
+                                <label class="form-label">产品名称 *</label>
+                                <input class="form-control" id="p-name" placeholder="如：红糖馒头" value="${isEdit ? product.name : ''}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">单价 (元) *</label>
+                                <!-- ★★★ 关键修改：step="0.01" 支持小数，并添加 min="0" ★★★ -->
+                                <input type="number" class="form-control" id="p-price" placeholder="0.00" step="0.01" min="0" value="${isEdit ? product.price : ''}">
+                                <div class="form-hint">支持小数，如 1.5、7.5</div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">工时 (小时/个) *</label>
+                                <input type="number" class="form-control" id="p-hours" placeholder="0.5" step="0.05" min="0" value="${isEdit ? product.laborHours : ''}">
+                                <div class="form-hint">支持小数，如 0.5、1.25</div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">分类</label>
+                                <input class="form-control" id="p-category" placeholder="如：常规、杂粮、花样" value="${isEdit ? product.category || '' : ''}">
+                            </div>
+                            <div class="flex gap-2 mt-3">
+                                <button class="btn btn-primary btn-block" id="save-product-btn">保存</button>
+                                <button class="btn btn-ghost btn-block" id="cancel-modal-btn">取消</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                const container = document.getElementById('modal-container');
+                container.innerHTML = html;
+                container.classList.remove('hidden');
+
+                // 事件绑定
+                document.getElementById('cancel-modal-btn').addEventListener('click', () => this.closeModal());
+                document.getElementById('save-product-btn').addEventListener('click', () => {
+                    const name = document.getElementById('p-name').value.trim();
+                    const priceRaw = document.getElementById('p-price').value.trim();
+                    const hoursRaw = document.getElementById('p-hours').value.trim();
+                    const category = document.getElementById('p-category').value.trim();
+
+                    if (!name) { this.toast('请输入产品名称', 'error'); return; }
+                    // ★★★ 使用 parseFloat 解析小数 ★★★
+                    const price = parseFloat(priceRaw);
+                    const laborHours = parseFloat(hoursRaw);
+                    if (isNaN(price) || price < 0) { this.toast('请输入有效价格（支持小数）', 'error'); return; }
+                    if (isNaN(laborHours) || laborHours < 0) { this.toast('请输入有效工时', 'error'); return; }
+
+                    if (isEdit) {
+                        Store.updateProduct(id, { name, price, laborHours, category });
+                        this.toast('产品已更新', 'success');
+                    } else {
+                        Store.addProduct({ name, price, laborHours, category });
+                        this.toast('产品已添加', 'success');
+                    }
+                    this.closeModal();
+                    this.renderTab('products');
+                });
+
+                // 点击overlay关闭
+                document.getElementById('modal-overlay').addEventListener('click', (e) => {
+                    if (e.target === e.currentTarget) this.closeModal();
+                });
+            },
+
+            // ==========================================================
+            //  📦  Order Modal
+            // ==========================================================
+            showOrderModal(id = null) {
+                this.editingOrderId = id;
+                const order = id ? Store.getOrder(id) : null;
+                const isEdit = !!order;
+                const products = Store.getProducts();
+
+                const html = `
+                    <div class="modal-overlay" id="modal-overlay">
+                        <div class="modal-box">
+                            <div class="modal-handle"></div>
+                            <div class="modal-title">${isEdit ? '编辑订单' : '新建订单'}</div>
+                            <div class="form-group">
+                                <label class="form-label">产品 *</label>
+                                <select class="form-control" id="o-product">
+                                    ${products.map(p => `<option value="${p.id}" ${isEdit && order.productId === p.id ? 'selected' : ''}>${p.name}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">数量 *</label>
+                                <input type="number" class="form-control" id="o-qty" placeholder="100" min="1" value="${isEdit ? order.qty : ''}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">截止日期 *</label>
+                                <input type="date" class="form-control" id="o-deadline" value="${isEdit ? order.deadline : ''}">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">状态</label>
+                                <select class="form-control" id="o-status">
+                                    <option value="pending" ${isEdit && order.status === 'pending' ? 'selected' : ''}>待确认</option>
+                                    <option value="confirmed" ${isEdit && order.status === 'confirmed' ? 'selected' : ''}>已确认</option>
+                                    <option value="producing" ${isEdit && order.status === 'producing' ? 'selected' : ''}>生产中</option>
+                                    <option value="done" ${isEdit && order.status === 'done' ? 'selected' : ''}>已完成</option>
+                                    <option value="canceled" ${isEdit && order.status === 'canceled' ? 'selected' : ''}>已取消</option>
+                                </select>
+                            </div>
+                            <div class="flex gap-2 mt-3">
+                                <button class="btn btn-primary btn-block" id="save-order-btn">保存</button>
+                                <button class="btn btn-ghost btn-block" id="cancel-modal-btn">取消</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                const container = document.getElementById('modal-container');
+                container.innerHTML = html;
+                container.classList.remove('hidden');
+
+                document.getElementById('cancel-modal-btn').addEventListener('click', () => this.closeModal());
+                document.getElementById('save-order-btn').addEventListener('click', () => {
+                    const productId = document.getElementById('o-product').value;
+                    const qty = parseInt(document.getElementById('o-qty').value);
+                    const deadline = document.getElementById('o-deadline').value;
+                    const status = document.getElementById('o-status').value;
+
+                    if (!productId) { this.toast('请选择产品', 'error'); return; }
+                    if (isNaN(qty) || qty < 1) { this.toast('请输入有效数量', 'error'); return; }
+                    if (!deadline) { this.toast('请选择截止日期', 'error'); return; }
+
+                    if (isEdit) {
+                        Store.updateOrder(id, { productId, qty, deadline, status });
+                        this.toast('订单已更新', 'success');
+                    } else {
+                        Store.addOrder({ productId, qty, deadline, status: status || 'pending' });
+                        this.toast('订单已创建', 'success');
+                    }
+                    this.closeModal();
+                    this.renderTab('orders');
+                });
+
+                document.getElementById('modal-overlay').addEventListener('click', (e) => {
+                    if (e.target === e.currentTarget) this.closeModal();
+                });
+            },
+
+            // ==========================================================
+            //  💰  Finance Modal
+            // ==========================================================
+            showFinanceModal() {
+                const html = `
+                    <div class="modal-overlay" id="modal-overlay">
+                        <div class="modal-box">
+                            <div class="modal-handle"></div>
+                            <div class="modal-title">添加财务记录</div>
+                            <div class="form-group">
+                                <label class="form-label">类型</label>
+                                <select class="form-control" id="f-type">
+                                    <option value="income">收入</option>
+                                    <option value="expense">支出</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">金额 (元) *</label>
+                                <input type="number" class="form-control" id="f-amount" placeholder="0.00" step="0.01" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">描述</label>
+                                <input class="form-control" id="f-desc" placeholder="如：销售订单 #001">
+                            </div>
+                            <div class="flex gap-2 mt-3">
+                                <button class="btn btn-primary btn-block" id="save-finance-btn">保存</button>
+                                <button class="btn btn-ghost btn-block" id="cancel-modal-btn">取消</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                const container = document.getElementById('modal-container');
+                container.innerHTML = html;
+                container.classList.remove('hidden');
+
+                document.getElementById('cancel-modal-btn').addEventListener('click', () => this.closeModal());
+                document.getElementById('save-finance-btn').addEventListener('click', () => {
+                    const type = document.getElementById('f-type').value;
+                    const amount = parseFloat(document.getElementById('f-amount').value);
+                    const description = document.getElementById('f-desc').value.trim();
+
+                    if (isNaN(amount) || amount <= 0) { this.toast('请输入有效金额', 'error'); return; }
+                    Store.addFinanceRecord({ type, amount, description });
+                    this.toast('记录已添加', 'success');
+                    this.closeModal();
+                    this.renderTab('finance');
+                });
+                document.getElementById('modal-overlay').addEventListener('click', (e) => {
+                    if (e.target === e.currentTarget) this.closeModal();
+                });
+            },
+
+            // ==========================================================
+            //  🧹  Modal & Toast 工具
+            // ==========================================================
+            closeModal() {
+                const container = document.getElementById('modal-container');
+                container.innerHTML = '';
+                container.classList.add('hidden');
+            },
+
+            toast(message, type = 'info') {
+                const container = document.getElementById('toast-container');
+                const el = document.createElement('div');
+                el.className = `toast ${type === 'success' ? 'toast-success' : type === 'error' ? 'toast-error' : type === 'warning' ? 'toast-warning' : ''}`;
+                el.textContent = message;
+                container.appendChild(el);
+                setTimeout(() => {
+                    el.style.opacity = '0';
+                    el.style.transform = 'translateY(-10px)';
+                    el.style.transition = 'opacity 0.3s, transform 0.3s';
+                    setTimeout(() => el.remove(), 300);
+                }, 2500);
+            }
+        };
+
+        // ============================================================
+        //  🚀 启动
+        // ============================================================
+        document.addEventListener('DOMContentLoaded', () => App.init());
+    </script>
 </body>
 </html>
