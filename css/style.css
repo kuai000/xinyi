@@ -1,244 +1,206 @@
-/* ============ 鑫意花样馒头 - 全局自定义样式 ============ */
-
-/* ===== 移动端全局优化 ===== */
-
-/* 安全区适配（刘海屏 / 底部Home条） */
-:root {
-    --safe-top: env(safe-area-inset-top, 0px);
-    --safe-bottom: env(safe-area-inset-bottom, 0px);
-    --tabbar-h: 56px;
-}
-
-/* 禁止水平溢出 + 禁止文字选中（非输入区域） */
-html, body {
-    overflow-x: hidden;
-    -webkit-text-size-adjust: 100%;
+/* 移动端基础适配 */
+* {
     -webkit-tap-highlight-color: transparent;
-    text-rendering: optimizeLegibility;
-    -webkit-font-smoothing: antialiased;
-}
-
-#app {
-    overflow-x: hidden;
-}
-
-/* 非输入区域禁止长按选中 */
-header, nav, button, .tab-btn, .shadow-sm, .rounded-2xl, .rounded-xl {
-    -webkit-user-select: none;
-    user-select: none;
     -webkit-touch-callout: none;
 }
 
-/* 输入区域允许选中 */
-input, textarea, select {
-    -webkit-user-select: text;
-    user-select: text;
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    overscroll-behavior-y: contain;
 }
 
-/* 顶部Header安全区留白 */
-#top-header {
-    padding-top: var(--safe-top) !important;
-    position: sticky;
-    top: 0;
-}
-
-/* 主内容区底部留白 = Tabbar高度 + 安全区 */
-#main-content {
-    padding-bottom: calc(var(--tabbar-h) + var(--safe-bottom) + 12px) !important;
-}
-
-#app {
-    padding-bottom: 0 !important;
-}
-
-/* 底部Tabbar安全区适配 */
+/* 底部Tab栏样式 */
 .tabbar {
-    padding-bottom: var(--safe-bottom) !important;
+    padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* Tab按钮触摸区增大 */
 .tab-btn {
-    min-height: 48px;
-    transition: all 0.15s ease;
     color: #9ca3af;
-    -webkit-tap-highlight-color: transparent;
+    transition: all 0.2s ease;
 }
+
 .tab-btn.active {
-    color: #111827;
+    color: #e11d48;
     font-weight: 600;
 }
+
 .tab-btn:active {
     transform: scale(0.92);
 }
 
-/* 所有可点击元素增大触摸区 */
-button {
-    min-height: 36px;
-    -webkit-tap-highlight-color: transparent;
+/* 卡片样式 */
+.card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
-button:active {
+
+/* 统计卡片左边框 */
+.stat-card {
+    border-left: 3px solid #e5e7eb;
+}
+
+.stat-card.red { border-left-color: #ef4444; }
+.stat-card.blue { border-left-color: #3b82f6; }
+.stat-card.green { border-left-color: #10b981; }
+.stat-card.purple { border-left-color: #8b5cf6; }
+
+/* 按钮点击效果 */
+.btn {
+    transition: all 0.15s ease;
+}
+
+.btn:active {
     transform: scale(0.97);
+    opacity: 0.85;
 }
 
-/* 输入框最小高度（iOS规范44px触摸区） */
-input[type="text"],
-input[type="number"],
-input[type="tel"],
-input[type="date"],
-select,
-textarea {
-    min-height: 44px;
-    font-size: 16px !important;  /* 防止iOS自动缩放 */
-}
-
-/* ===== 隐藏数字输入框箭头 ===== */
-input[type="number"]::-webkit-outer-spin-button,
-input[type="number"]::-webkit-inner-spin-button {
+/* 表单输入框 */
+input, select, textarea {
     -webkit-appearance: none;
-    margin: 0;
-}
-input[type="number"] {
-    -moz-appearance: textfield;
+    appearance: none;
 }
 
-/* ===== 组件样式 ===== */
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #e11d48;
+    box-shadow: 0 0 0 3px rgba(225, 29, 72, 0.1);
+}
 
-/* 工时产品的"默认产品"紫色小标签 */
-.tag-purple {
-    background: #ede9fe;
-    color: #7c3aed;
-    font-size: 10px;
+/* 模态框动画 */
+.modal-overlay {
+    background: rgba(0, 0, 0, 0.5);
+    animation: fadeIn 0.2s ease;
+}
+
+.modal-content {
+    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Toast 动画 */
+.toast {
+    animation: toastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1), toastOut 0.3s ease 2.2s forwards;
+    pointer-events: none;
+}
+
+@keyframes toastIn {
+    from { transform: translate(-50%, -20px); opacity: 0; }
+    to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+@keyframes toastOut {
+    from { transform: translate(-50%, 0); opacity: 1; }
+    to { transform: translate(-50%, -20px); opacity: 0; }
+}
+
+/* 列表项分隔线 */
+.list-item {
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.list-item:last-child {
+    border-bottom: none;
+}
+
+/* 产能进度条 */
+.capacity-bar {
+    height: 6px;
+    background: #e5e7eb;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.capacity-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+/* 标签样式 */
+.badge {
+    display: inline-flex;
+    align-items: center;
     padding: 2px 8px;
-    border-radius: 10px;
-    line-height: 1.4;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 500;
 }
 
-/* 卡片内列表圆点分隔 */
-.dot-list li {
+.badge-gray { background: #f3f4f6; color: #6b7280; }
+.badge-red { background: #fef2f2; color: #dc2626; }
+.badge-yellow { background: #fefce8; color: #ca8a04; }
+.badge-green { background: #f0fdf4; color: #16a34a; }
+.badge-blue { background: #eff6ff; color: #2563eb; }
+.badge-purple { background: #faf5ff; color: #9333ea; }
+.badge-orange { background: #fff7ed; color: #ea580c; }
+
+/* 排产时间轴 */
+.timeline-item {
     position: relative;
-    padding-left: 14px;
-    font-size: 13px;
-    color: #4b5563;
-    line-height: 1.6;  /* 增大行高，移动端更易读 */
+    padding-left: 24px;
 }
-.dot-list li::before {
+
+.timeline-item::before {
     content: '';
     position: absolute;
-    left: 2px;
-    top: 9px;
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: #9ca3af;
-}
-
-/* 模态框弹出动画 */
-@keyframes slide-up {
-    from {
-        transform: translateY(30px);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-.animate-slide-up {
-    animation: slide-up 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* 模态框移动端优化 */
-#modal-container > div {
-    overflow-y: auto !important;
-    -webkit-overflow-scrolling: touch;
-}
-#modal-container .bg-white {
-    max-width: 100vw !important;
-    width: 100% !important;
-}
-
-/* 滚动条美化 */
-::-webkit-scrollbar {
-    width: 3px;
-    height: 3px;
-}
-::-webkit-scrollbar-thumb {
+    left: 7px;
+    top: 4px;
+    bottom: -16px;
+    width: 2px;
     background: #e5e7eb;
-    border-radius: 2px;
 }
 
-/* 输入框聚焦统一效果 */
-input[type="number"]:focus,
-input[type="text"]:focus,
-input[type="date"]:focus,
-input[type="tel"]:focus,
-textarea:focus,
-select:focus {
-    outline: none;
-    border-color: #fb7185 !important;
-    box-shadow: 0 0 0 3px rgba(251, 113, 133, 0.12);
+.timeline-item:last-child::before {
+    display: none;
 }
 
-/* 防止长文本溢出 */
-.ellipsis {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.timeline-dot {
+    position: absolute;
+    left: 0;
+    top: 4px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 3px solid white;
+    box-shadow: 0 0 0 1px #e5e7eb;
 }
 
-/* 卡片悬浮（仅桌面端） */
-@media (hover: hover) {
-    .shadow-sm:hover {
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04);
-    }
+/* 隐藏滚动条但保留功能 */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
 
-/* Toast 容器 */
-#toast-container > div {
-    white-space: nowrap;
-    max-width: 90vw;
-}
-
-/* ===== 小屏手机专项优化 (<=360px) ===== */
-@media (max-width: 360px) {
-    #main-content {
-        padding-left: 12px !important;
-        padding-right: 12px !important;
-    }
-    .text-2xl { font-size: 1.25rem !important; }
-    .text-xl { font-size: 1.05rem !important; }
-    .grid-cols-4 { gap: 8px !important; }
-    .grid-cols-3 { gap: 8px !important; }
-    .grid-cols-2 { gap: 8px !important; }
-}
-
-/* ===== 横屏适配 ===== */
-@media (orientation: landscape) and (max-height: 500px) {
-    #top-header {
-        padding-top: 0 !important;
-    }
-    .tab-btn {
-        min-height: 40px;
-    }
-    #main-content {
-        padding-bottom: calc(48px + var(--safe-bottom) + 8px) !important;
-    }
-}
-
-/* ===== 防止图片/表格溢出 ===== */
-img, video, canvas {
-    max-width: 100%;
-}
-table {
-    max-width: 100%;
-    display: block;
+/* 横向滚动容器 */
+.h-scroll {
+    display: flex;
+    gap: 12px;
     overflow-x: auto;
+    padding-bottom: 4px;
+    scroll-snap-type: x mandatory;
 }
 
-/* ===== 禁止双击放大 ===== */
-* {
-    touch-action: manipulation;
+.h-scroll > * {
+    scroll-snap-align: start;
+    flex-shrink: 0;
 }
-input, textarea, select {
-    touch-action: auto;
+
+/* 图表容器 */
+.chart-container {
+    position: relative;
+    width: 100%;
+    height: 240px;
 }
